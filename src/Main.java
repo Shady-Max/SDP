@@ -1,65 +1,51 @@
-import CoffeeIngredients.*;
-import CoffeeTypes.Coffee;
-import CoffeeTypes.CoffeeFactory;
-
-import java.util.Scanner;
-
-/**
- * Main class for the Coffee Shop application. Demonstrates the use of various
- * creational design patterns including Singleton, Factory Method, Abstract Factory,
- * Prototype, and Builder.
- * <p>
- * The application allows users to create, modify, and clone coffee orders
- * with different ingredients and options.
- */
+import Assignment2.Adapter.PDFDocumentAdapter;
+import Assignment2.Bridge.HighlightRenderEngine;
+import Assignment2.Bridge.RenderEngine;
+import Assignment2.Bridge.SimpleRenderEngine;
+import Assignment2.Composite.DocumentGroup;
+import Assignment2.Document;
+import Assignment2.Facade.DocumentFacade;
+import Assignment2.Flyweight.DocumentFactory;
+import Assignment2.Proxy.ProxyDocument;
 
 public class Main {
-    @SuppressWarnings("CallToPrintStackTrace")
     public static void main(String[] args) {
-        //Singleton
-        CoffeeShop coffeeShop = CoffeeShop.getInstance();
 
-        // User selects ingredients
-        String CoffeeString = CoffeeSelector.chooseCoffee();
-        Coffee coffee = CoffeeFactory.createCoffee(CoffeeString);
-        IngredientFactory ingredientFactory = CoffeeFactory.getIngredientFactory(CoffeeString);
-        Milk chosenMilk = IngredientSelector.chooseMilk(ingredientFactory.getMilk());
-        Syrup chosenSyrup = IngredientSelector.chooseSyrup(ingredientFactory.getSyrup());
-        Additive chosenAdditive = IngredientSelector.chooseAdditive(ingredientFactory.getAdditive());
+        DocumentFacade facade = new DocumentFacade();
 
-        //Builder
-        CoffeeOrder customOrder;
-        customOrder = new CoffeeBuilder()
-                .setCoffee(coffee)
-                .addMilk(chosenMilk)
-                .addSyrup(chosenSyrup)
-                .addAdditive(chosenAdditive)
-                .build();
+        // 1. Использование Proxy для ленивой загрузки
+        System.out.println("1. Ленивая загрузка документов:");
+        // тут не используется proxy
+        // программа, которая была до этого вообще не может работать с разными типами Document, она поддерживала только RealDocument
+        DocumentFactory.addDocument("Report", new ProxyDocument("Report")); // кастомный метод добавленный для поддерживания разных видов документов
+        facade.displayDocument("Report");
 
-        // Process order
-        coffeeShop.takeOrder(customOrder);
+        // 2. Использование декоратора для добавления водяного знака
+        System.out.println("\n2. Добавление водяного знака:");
+        facade.displayDocumentWithWatermark("Report");
 
-        // Prototype (cloning the order)
-        try {
-            CoffeeOrder clonedOrder = coffeeShop.getLastOrder().clone();
-            System.out.println("Cloned order: " + clonedOrder);
-            Scanner scanner = new Scanner(System.in);
-            System.out.println("Press 1 if you want to change some of the ingredients: ");
-            try {
-                if (Integer.parseInt(scanner.nextLine()) == 1) {
-                    chosenMilk = IngredientSelector.chooseMilk(clonedOrder.getMilk());
-                    chosenSyrup = IngredientSelector.chooseSyrup(clonedOrder.getSyrup());
-                    chosenAdditive = IngredientSelector.chooseAdditive(clonedOrder.getAdditive());
-                    clonedOrder = clonedOrder.toCoffeeBuilder()
-                            .addMilk(chosenMilk)
-                            .addSyrup(chosenSyrup)
-                            .addAdditive(chosenAdditive)
-                            .build();
-                }
-            } catch (NumberFormatException _) {/* skip */}
-            coffeeShop.takeOrder(clonedOrder);
-        } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
-        }
+        // 3. Использование Flyweight для повторного использования документа
+        System.out.println("\n3. Повторное использование документа:");
+        facade.displayDocument("Report");
+
+        // 4. Использование Composite для работы с группой документов
+        System.out.println("\n4. Работа с группами документов:");
+        DocumentGroup group = new DocumentGroup();
+        group.addDocument(DocumentFactory.getDocument("Report"));
+        group.addDocument(DocumentFactory.getDocument("Presentation"));
+        group.display();
+
+        // 5. Использование Adapter для работы с PDF
+        System.out.println("\n5. Работа с PDF документами через Adapter:");
+        Document pdfDocument = new PDFDocumentAdapter("document.pdf");
+        pdfDocument.display();
+
+        // 6. Использование Bridge для рендеринга
+        System.out.println("\n6. Рендеринг документа через движок:");
+        RenderEngine simpleEngine = new SimpleRenderEngine();
+        facade.renderDocument("Report", simpleEngine);
+
+        RenderEngine highlightEngine = new HighlightRenderEngine();
+        facade.renderDocument("Report", highlightEngine);
     }
 }
