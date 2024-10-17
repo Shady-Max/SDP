@@ -1,98 +1,87 @@
-import Assignment3.Chain.*;
-import Assignment3.Command.*;
-import Assignment3.Iterator.*;
-import Assignment3.Mediator.*;
-import Assignment3.Memento.*;
+import Assignment4.Observer.*;
+import Assignment4.State.Player;
+import Assignment4.Strategy.*;
+import Assignment4.Template.*;
+import Assignment4.Visitor.*;
 
-/**
- * The Main class demonstrates the Chain of Responsibility,
- * Command, Iterator, Mediator and Memento patterns.
- */
 public class Main {
     public static void main(String[] args) {
-        // Chain
-        PaymentHandler paymentMethods = new PaymentA();
-        paymentMethods  .setNext(new PaymentB())
-                        .setNext(new PaymentC());
+        //Observer
 
-        paymentMethods.handle(210);
+        NewsPublisherImpl newsPublisher = new NewsPublisherImpl();
 
-        System.out.println();
-        //Command
-        Television television = new Television();
-        RemoteControl remoteControl = new RemoteControl();
-        remoteControl   .setCommand("VolumeUp", new VolumeUpCommand(television))
-                        .setCommand("VolumeDown", new VolumeDownCommand(television))
-                        .setCommand("TurnOn", new TurnOnCommand(television))
-                        .setCommand("TurnOff", new TurnOffCommand(television))
-                        .setCommand("NextChannel", new NextChannelCommand(television))
-                        .setCommand("PrevChannel", new PreviousChannelCommand(television));
+        Observer smartphoneSubscriber = new NewsSubscriberSmartphone();
+        Observer laptopSubscriber = new NewsSubscriberLaptop();
+        Observer tabletSubscriber = new NewsSubscriberTablet();
 
-        remoteControl   .buttonPressed("TurnOn")
-                        .buttonPressed("VolumeUp")
-                        .buttonPressed("NextChannel")
-                        .buttonPressed("VolumeDown")
-                        .buttonPressed("PrevChannel")
-                        .buttonPressed("TurnOff")
-                        .buttonPressed("Unknown Command");
+        newsPublisher.subscribe(smartphoneSubscriber);
+        newsPublisher.subscribe(laptopSubscriber);
+        newsPublisher.subscribe(tabletSubscriber);
+
+        newsPublisher.publishNews("Sports", "Team loses the match!");
+        newsPublisher.publishNews("Science", "New scientific breakthrough!");
+        newsPublisher.publishNews("Politics", "The next Presidential elections will be soon!");
 
         System.out.println();
 
-        //Iterator
-        ListMovieCollection listCollection = new ListMovieCollection();
-        listCollection  .addMovie("Inception")
-                        .addMovie("The Matrix")
-                        .addMovie("Interstellar");
+        //State
 
-        ArrayMovieCollection arrayCollection = new ArrayMovieCollection(3);
-        arrayCollection .addMovie("The Godfather")
-                        .addMovie("Pulp Fiction")
-                        .addMovie("The Dark Knight");
+        Player player = new Player();
 
-        Iterator<String> listIterator = listCollection.createIterator();
-        System.out.println("Movies from List:");
-        while (listIterator.hasNext()) {
-            System.out.println(listIterator.next());
-        }
-
-        Iterator<String> arrayIterator = arrayCollection.createIterator();
-        System.out.println("\nMovies from Array:");
-        while (arrayIterator.hasNext()) {
-            System.out.println(arrayIterator.next());
-        }
+        player.play();
+        player.pause();
+        player.play();
+        player.stop();
+        player.pause();
 
         System.out.println();
 
-        //Mediator
+        //Strategy
 
-        HomeMediator mediator = new HomeMediatorImpl();
+        Order order = new Order(1000);
 
-        Sensor temperatureSensor = new TemperatureSensor(mediator);
-        Sensor humiditySensor = new HumiditySensor(mediator);
-        Sensor lightSensor = new LightSensor(mediator);
+        order.setPaymentStrategy(new CardPaymentStrategy());
+        System.out.println("Final amount with card payment: " + order.calculateFinalAmount());
 
-        temperatureSensor.sendData();
-        humiditySensor.sendData();
-        lightSensor.sendData();
+        order.setPaymentStrategy(new WalletPaymentStrategy());
+        System.out.println("Final amount with wallet payment: " + order.calculateFinalAmount());
 
-        mediator.printReport();
+        order.setPaymentStrategy(new CashOnDeliveryStrategy());
+        System.out.println("Final amount with cash on delivery: " + order.calculateFinalAmount());
 
         System.out.println();
 
-        // Memento
+        //Template
 
-        TextEditor editor = new TextEditor();
-        Caretaker caretaker = new Caretaker();
+        QualityCheck foodCheck = new FoodQualityCheck();
+        System.out.println("Food product quality check:");
+        foodCheck.checkProduct();
 
-        editor.addText("Hello, world!");
-        editor.showText();
+        QualityCheck electronicsCheck = new ElectronicsQualityCheck();
+        System.out.println("Electronics product quality check:");
+        electronicsCheck.checkProduct();
 
-        caretaker.save(editor);
+        System.out.println();
 
-        editor.addText(" This is the second sentence.");
-        editor.showText();
+        //Visitor
 
-        caretaker.restore(editor);
-        editor.showText();
+        File textFile = new TextFile("document.txt", "This is a clean document.");
+        File bannedTextFile = new TextFile("bannedDocument.txt", "banned");
+        File executableFile = new ExecutableFile("program.exe", "safe_code");
+        File malvareExecutableFile = new ExecutableFile("suspiciousProgram.exe", "malware");
+
+        Visitor antivirus = new AntivirusVisitor();
+        Visitor report = new ReportVisitor();
+
+        System.out.println("Antivirus check:");
+        textFile.accept(antivirus);
+        bannedTextFile.accept(antivirus);
+        executableFile.accept(antivirus);
+        malvareExecutableFile.accept(antivirus);
+
+        System.out.println("\nGenerating report:");
+        textFile.accept(report);
+        executableFile.accept(report);
+
     }
 }
